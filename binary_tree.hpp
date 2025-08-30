@@ -488,6 +488,8 @@ namespace adt {
 
         public:
             /* ------------------------------------------Definitions------------------------------------------------ */
+            using value_type = binary_tree::value_type;
+
             using allocator_type = _NodeAllocator;
 
         protected:
@@ -619,7 +621,7 @@ namespace adt {
 
             [[nodiscard]] reference value() const {
                 if (this->node == nullptr) {
-                        throw std::runtime_error("segmentation fault");
+                    throw std::runtime_error("segmentation fault");
                 }
                 return this->node->value;
             }

@@ -48,38 +48,15 @@ namespace adt {
 
             _Node* right;
 
-            size_type height;
-
             /* -----------------------------------------Constructors------------------------------------------------ */
             constexpr _Node() noexcept
-                : value(value_type()), parent(nullptr), left(nullptr),right(nullptr), height(0) {}
+                : value(value_type()), parent(nullptr), left(nullptr), right(nullptr) {}
 
             constexpr _Node(value_type value) noexcept
-                : value(value), parent(nullptr), left(nullptr), right(nullptr), height(0) {}
+                : value(value), parent(nullptr), left(nullptr), right(nullptr) {}
 
-            constexpr _Node(value_type value, _Node* parent, _Node* left, _Node* right, size_type height) noexcept 
-                : value(value), parent(parent), left(left), right(right), height(height) {
-                // If there is a left child...
-                if (this->left != nullptr) {
-                    // If there is a right child...
-                    if (this->right != nullptr) {
-                        // Set the height to 1 plus the larger height of the two children
-                        this->height = 1 + std::max<size_type>({this->left->height, this->right->height});
-                    } else {
-                        // Otherwise, if there is NO right child, then set 
-                        // the height to 1 plus the left child's height
-                        this->height = 1 + this->left->height;
-                    }
-                } else {
-                    // Otherwise, if there is a right child, but NO left child...
-                    if (this->right != nullptr) {
-                        // Set the height to 1 plus the right child's height
-                        this->height = 1 + this->right->height;
-                    } else {
-                        // Otherwise, if there are no children, then set the height to 0
-                        this->height = 0;
-                    }
-                }
+            constexpr _Node(value_type value, _Node* parent, _Node* left, _Node* right) noexcept
+                : value(value), parent(parent), left(left), right(right) {
 
                 // Do nothing if `*this` is the root node
                 if (parent == nullptr) {
@@ -116,7 +93,7 @@ namespace adt {
             constexpr auto operator<=>(const _Node&) const noexcept = default;
 
         };
-
+        
         /* ----------------------------------------------Definitions------------------------------------------------ */
         using allocator_traits = typename std::allocator_traits<allocator_type>;
 
@@ -145,11 +122,10 @@ namespace adt {
         constexpr _Node* _construct_node(const_reference value,
                                         _Node* parent, 
                                         _Node* left,
-                                        _Node* right,
-                                        size_type height) noexcept {
+                                        _Node* right) noexcept {
             // Create the node
             _Node* node = node_allocator_traits::allocate(this->node_allocator, 1);
-            node_allocator_traits::construct(this->node_allocator, node, value, parent, left, right, height);
+            node_allocator_traits::construct(this->node_allocator, node, value, parent, left, right);
 
             return node;
         }
@@ -186,7 +162,6 @@ namespace adt {
 
             return parent;
         }
-    
     public:
         /* --------------------------------------------Constant Iterator-------------------------------------------- */
         class const_iterator {
@@ -521,15 +496,7 @@ namespace adt {
 
             constexpr node_type(std::nullptr_t) noexcept : node(nullptr) {}
 
-            constexpr node_type(const node_type& other) noexcept {
-                if (other.node == nullptr) {
-                    this->node = nullptr;
-                    return;
-                }
-
-                this->_construct(other.node);
-                this->allocator = other.allocator;
-            }
+            constexpr node_type(const node_type& other) noexcept = delete;
 
             constexpr node_type(node_type&& other) noexcept {
                 if (other.node == nullptr) {
@@ -548,23 +515,7 @@ namespace adt {
             constexpr ~node_type() noexcept { this->_destroy(); }
 
             /* ---------------------------------------Overloaded Operators------------------------------------------ */
-            constexpr node_type& operator=(const node_type& other) noexcept {
-                // Protect against self-assignment
-                if (this == &other) {
-                    return *this;
-                }
-
-                this->_destroy();
-
-                if (other.node == nullptr) {
-                    return *this;
-                }
-
-                this->_construct(other.node);
-                this->allocator = other.allocator;
-
-                return *this;
-            }
+            constexpr node_type& operator=(const node_type& other) noexcept = delete;
 
             constexpr node_type& operator=(node_type&& other) noexcept {
                 this->_destroy();
@@ -637,10 +588,10 @@ namespace adt {
         };
     
         /* -------------------------------------------Insert Return Type-------------------------------------------- */
-        template<std::input_iterator InputIt = iterator, class NodeType = node_type>
+        template<std::input_iterator Iterator = iterator, class NodeType = node_type>
         struct insert_return_type {
             /* --------------------------------------------Fields--------------------------------------------------- */
-            InputIt position;
+            Iterator position;
 
             bool inserted;
 
@@ -649,8 +600,8 @@ namespace adt {
             /* -----------------------------------------Constructors------------------------------------------------ */
             constexpr insert_return_type() noexcept : inserted(false) {}
 
-            constexpr insert_return_type(InputIt position, bool inserted, NodeType node) noexcept
-                : position(position), inserted(inserted), node(node) {}
+            constexpr insert_return_type(Iterator position, bool inserted, NodeType&& node) noexcept
+                : position(position), inserted(inserted), node(std::move(node)) {}
 
             constexpr insert_return_type(const insert_return_type&) noexcept = default;
 
